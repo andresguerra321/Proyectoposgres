@@ -204,3 +204,96 @@ CALL sp_refrescar_indicadores_phva();
 | **14** | Modelo PHVA en estructura de datos | [`03_ddl_parametrizacion_sst_pesv.sql`](03_ddl_parametrizacion_sst_pesv.sql), [`07_vistas_indicadores_phva.sql`](07_vistas_indicadores_phva.sql) |
 | **16** | Mecanismos de concurrencia y bloqueos | [`05`](05_ddl_gestion_documental_bloqueos.sql), [`08`](08_funciones_procedimientos.sql), [`09`](09_triggers_auditoria_bloqueos.sql) |
 | **17** | Documentación técnica exhaustiva | [`README.md`](README.md) |
+
+
+---
+
+## 🧪 Consultas de Evaluación y Verificación Inicial
+
+A continuación se detallan las consultas requeridas para la validación inicial de los datos almacenados en la plataforma:
+
+### 1. Consultar todos los registros almacenados en la tabla `tenants`
+> **Enunciado:** El estudiante deberá consultar todos los registros almacenados en la tabla `tenants`, mostrando la información disponible de cada organización registrada en el sistema.
+
+```sql
+-- Consulta todos los campos de las organizaciones (tenants)
+SELECT * 
+FROM tenants;
+
+-- Consulta equivalente sobre la tabla base 'empresas':
+SELECT * 
+FROM empresas;
+```
+
+---
+
+### 2. Consultar nombre, correo de contacto y teléfono de las organizaciones
+> **Enunciado:** El estudiante deberá consultar el nombre, correo de contacto y teléfono de todas las organizaciones registradas en la tabla `tenants`.
+
+```sql
+-- Proyección específica de datos de contacto de cada tenant
+SELECT 
+    razon_social AS nombre_organizacion,
+    email_contacto,
+    telefono
+FROM tenants;
+```
+
+---
+
+### 3. Consultar personas con estado activo en la plataforma
+> **Enunciado:** El estudiante deberá consultar las personas cuyo estado se encuentre activo dentro de la plataforma.
+
+```sql
+-- Listado de trabajadores / usuarios activos en el sistema
+SELECT 
+    id,
+    tipo_documento,
+    numero_documento,
+    nombres,
+    apellidos,
+    email,
+    telefono,
+    empresa_id,
+    cargo_id,
+    activo
+FROM personas
+WHERE activo = TRUE;
+
+-- Consulta enriquecida con nombre de empresa y cargo mediante JOIN:
+SELECT 
+    p.id AS persona_id,
+    p.tipo_documento || ' ' || p.numero_documento AS identificacion,
+    p.nombres || ' ' || p.apellidos AS nombre_completo,
+    p.email,
+    p.telefono,
+    e.razon_social AS organizacion,
+    c.nombre AS cargo_ocupacional,
+    p.activo
+FROM personas p
+JOIN empresas e ON p.empresa_id = e.id
+JOIN cargos c ON p.cargo_id = c.id
+WHERE p.activo = TRUE
+ORDER BY e.razon_social, p.apellidos;
+```
+
+---
+
+### 4. Consultar organizaciones por coincidencia de texto (Filtro por palabra)
+> **Enunciado:** El estudiante deberá obtener las organizaciones cuyo nombre contenga una determinada palabra proporcionada como criterio de búsqueda.
+
+```sql
+-- Búsqueda insensible a mayúsculas y minúsculas con ILIKE
+-- Ejemplo: buscar organizaciones que contengan la palabra 'Logística' o 'Metálicas'
+SELECT 
+    id AS tenant_id,
+    nit || '-' || dv AS identificacion_fiscal,
+    razon_social,
+    nombre_comercial,
+    sector_economico,
+    email_contacto,
+    telefono
+FROM tenants
+WHERE razon_social ILIKE '%Logística%' 
+   OR nombre_comercial ILIKE '%Logística%';
+```

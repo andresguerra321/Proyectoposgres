@@ -5,6 +5,46 @@
 -- =============================================================================
 
 -- =============================================================================
+-- 0. Consultas de Evaluación y Verificación Inicial
+-- =============================================================================
+
+-- 0.1 Consultar todos los registros en la tabla tenants
+SELECT * FROM tenants;
+
+-- 0.2 Consultar nombre, correo de contacto y teléfono de las organizaciones
+SELECT 
+    razon_social AS nombre_organizacion,
+    email_contacto,
+    telefono
+FROM tenants;
+
+-- 0.3 Consultar personas con estado activo en la plataforma
+SELECT 
+    id,
+    tipo_documento,
+    numero_documento,
+    nombres || ' ' || apellidos AS nombre_completo,
+    email,
+    telefono,
+    empresa_id,
+    activo
+FROM personas
+WHERE activo = TRUE;
+
+-- 0.4 Obtener organizaciones cuyo nombre contenga una palabra clave (ej. 'Logística' o 'Metálicas')
+SELECT 
+    id AS tenant_id,
+    nit || '-' || dv AS identificacion_fiscal,
+    razon_social,
+    nombre_comercial,
+    sector_economico,
+    email_contacto,
+    telefono
+FROM tenants
+WHERE razon_social ILIKE '%Logística%' 
+   OR nombre_comercial ILIKE '%Logística%';
+
+-- =============================================================================
 -- 1. Resumen Ejecutivo Multi-Empresa (Tenants)
 -- =============================================================================
 -- Muestra cada organización con su clase de riesgo, total de sedes y personal

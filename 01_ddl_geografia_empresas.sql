@@ -75,3 +75,24 @@ CREATE TABLE IF NOT EXISTS sedes_empresa (
 CREATE INDEX idx_empresas_nit ON empresas(nit);
 CREATE INDEX idx_empresas_tamano ON empresas(tamano_id);
 CREATE INDEX idx_sedes_empresa ON sedes_empresa(empresa_id);
+
+-- 7. Vista de Compatibilidad: tenants (Permite consultar indistintamente 'empresas' o 'tenants')
+CREATE OR REPLACE VIEW tenants AS 
+SELECT 
+    id,
+    nit,
+    dv,
+    razon_social,
+    nombre_comercial,
+    sector_economico,
+    clase_riesgo_arl,
+    tamano_id,
+    municipio_id,
+    direccion_principal,
+    telefono,
+    email_contacto,
+    nivel_misionero_pesv,
+    activo,
+    created_at,
+    updated_at
+FROM empresas;
