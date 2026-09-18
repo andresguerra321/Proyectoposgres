@@ -4,3 +4,7 @@
 Thumbs.db
 .vscode/
 
+# Ignorar archivos Markdown excepto README.md y consultas_resueltas.md
+*.md
+!README.md
+!consultas_resueltas.md
