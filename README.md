@@ -11,7 +11,7 @@ Sistema de base de datos relacional y documental en **PostgreSQL** para la admin
 3. [El Ciclo PHVA en SST y PESV](#-el-ciclo-phva-en-sst-y-pesv)
 4. [Diagrama Entidad-Relación (Mermaid)](#-diagrama-entidad-relación-mermaid)
 5. [Estructura de Archivos SQL del Proyecto](#-estructura-de-archivos-sql-del-proyecto)
-6. [Guía de Inicialización y Despliegue en macOS (Docker & pgAdmin)](#-guía-de-inicialización-y-despliegue-en-macos-docker--pgadmin)
+6. [Guía de Inicialización con Docker Compose (Terminal y Visual)](#-guía-de-inicialización-con-docker-compose-terminal-y-visual)
 7. [Control de Concurrencia y Bloqueos de Recursos](#-control-de-concurrencia-y-bloqueos-de-recursos)
 8. [Vistas Materializadas e Indicadores](#-vistas-materializadas-e-indicadores)
 9. [Matriz de Cumplimiento de Objetivos Académicos](#-matriz-de-cumplimiento-de-objetivos-académicos)
@@ -124,24 +124,25 @@ Todos los archivos han sido estructurados modularmente en la carpeta `proyecto/`
 
 ---
 
-## 🚀 Guía de Inicialización con Docker Compose en macOS (Flujo 100% Visual / Sin Terminal)
+## 🚀 Guía de Inicialización con Docker Compose (Terminal y Visual)
 
-Este proyecto está diseñado para ser desplegado y operado **sin necesidad de trabajar en la consola de comandos**, utilizando **Docker Compose**, **Docker Desktop** y la interfaz gráfica web de **pgAdmin 4** en el navegador.
+Este proyecto está completamente orquestado con **Docker Compose**, permitiendo su inicialización tanto desde la **terminal (CLI)** con comandos directos como de forma **100% visual** a través de **Docker Desktop** y **pgAdmin 4** en el navegador.
 
 ---
 
-### 1. ¿Cómo funciona la arquitectura Docker sin terminal?
+### 1. ¿Cómo funciona la arquitectura Docker Compose?
 
-El archivo [`docker-compose.yml`](docker-compose.yml) y su configuración [`.env`](.env) automatizan todo el proceso:
+El archivo [`docker-compose.yml`](docker-compose.yml) y su archivo de variables [`.env`](.env) automatizan la infraestructura:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                           Tu macOS / Navegador                          │
+│                      Tu Entorno Local (macOS / Linux / Windows)         │
 │                                                                         │
-│   🌐 Safari / Chrome (pgAdmin 4 Web) ──► http://localhost:8081         │
-│   🐘 Cliente Mac opcional (TablePlus) ──► localhost:5433                 │
+│   💻 Terminal CLI ─────────────────────► docker compose / docker exec   │
+│   🌐 Navegador Web (pgAdmin 4) ────────► http://localhost:8081         │
+│   🐘 Cliente Nativo (TablePlus/DBeaver) ► localhost:5433                 │
 └────────────────────────────────────┬────────────────────────────────────┘
-                                     │ Red Docker interna
+                                     │ Red Interna Docker (bridge)
                                      ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                      Contenedores Docker Compose                        │
@@ -149,20 +150,20 @@ El archivo [`docker-compose.yml`](docker-compose.yml) y su configuración [`.env
 │  ┌───────────────────────┐             ┌─────────────────────────────┐  │
 │  │      pgadmin_web      │             │         postgres_db         │  │
 │  │  (Puerto int: 80)     │ ──────────► │  (PostgreSQL 16 en 5432)    │  │
-│  │  Pre-registrado con   │             │  Auto-inicializado con:     │  │
-│  │  ./servers.json       │             │  ./init/*.sql               │  │
+│  │  Pre-configurado con  │             │  Auto-inicializado con:     │  │
+│  │  ./servers.json       │             │  ./init/*.sql (DDL + Datos) │  │
 │  └───────────────────────┘             └─────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-1. **Auto-inicialización:** Al levantar el contenedor por primera vez, PostgreSQL lee automáticamente la carpeta [`init/`](init/) (montada en `/docker-entrypoint-initdb.d/`) y ejecuta en orden todos los DDLs, población semilla, vistas, funciones y triggers. **No necesitas ejecutar ningún script manualmente en la terminal.**
-2. **Auto-conexión en pgAdmin:** pgAdmin 4 se inicia con [`servers.json`](servers.json) preconfigurado, por lo que el servidor de base de datos ya aparece registrado en el panel de navegación.
+1. **Auto-inicialización:** Al crear el contenedor por primera vez, PostgreSQL lee automáticamente la carpeta [`init/`](init/) (montada en `/docker-entrypoint-initdb.d/`) y ejecuta en orden todos los DDLs, población semilla enriquecida, vistas y triggers.
+2. **Auto-conexión en pgAdmin:** pgAdmin 4 arranca con el archivo [`servers.json`](servers.json) precargado, mostrando la base de datos `bkddb` lista para usar.
 
 ---
 
-### 2. Configuración del Archivo `.env`
+### 2. Configuración de Variables de Entorno (`.env`)
 
-Asegúrate de que en la raíz del proyecto exista el archivo [`.env`](.env) (o duplica [`.env.example`](.env.example)):
+En la raíz del proyecto existe el archivo [`.env`](.env) (respaldado por la plantilla [`.env.example`](.env.example)):
 
 ```env
 POSTGRES_USER=bkseducate
@@ -175,81 +176,111 @@ PGADMIN_DEFAULT_PASSWORD=SuperBks123!
 PGADMIN_PORT=8081
 ```
 
-* **`POSTGRES_PORT=5433`:** Se usa el puerto 5433 en tu Mac para no colisionar con instalaciones nativas de PostgreSQL en el puerto 5432.
-* **`PGADMIN_PORT=8081`:** Interfaz web lista en tu navegador en `http://localhost:8081`.
+* **`POSTGRES_PORT=5433`:** Mapeado al puerto local 5433 para prevenir conflictos con instancias locales de PostgreSQL en el puerto 5432.
+* **`PGADMIN_PORT=8081`:** Expone la interfaz gráfica web en `http://localhost:8081`.
 
 ---
 
-### 3. Encender el Entorno con 1 Clic (Sin Terminal)
+### 3. Inicialización por Terminal (Línea de Comandos / CLI)
 
-Tienes dos métodos completamente visuales para encender todo:
+Esta es la forma más rápida y estándar para desarrolladores:
 
-* **Método 1: Con la extensión de Docker en VS Code / Cursor**
-  1. Haz clic derecho sobre el archivo [`docker-compose.yml`](docker-compose.yml) en el explorador de archivos.
-  2. Selecciona **Compose Up**.
-  3. ¡Listo! Ambos contenedores (`postgres_db` y `pgadmin_web`) se levantarán automáticamente.
+#### A. Encender los contenedores
+Abre tu **Terminal** (o iTerm2 / PowerShell), ubícate en la raíz del repositorio y ejecuta:
 
-* **Método 2: Con Docker Desktop para Mac**
-  1. Abre la aplicación **Docker Desktop** en tu Mac.
-  2. En la sección **Containers**, localiza el grupo del proyecto y haz clic en el botón **Start / Play** (▶️).
+```bash
+# Levantar PostgreSQL y pgAdmin en segundo plano (-d)
+docker compose up -d
+```
 
-*(Si en algún momento prefieres usar terminal rápida, el comando equivalente es simplemente: `docker compose up -d`).*
+#### B. Inspeccionar el progreso y logs de inicialización
+Para verificar cómo PostgreSQL ejecuta automáticamente los scripts de `init/`:
+```bash
+docker compose logs -f postgres_db
+```
+*(Presiona `Ctrl + C` para salir de los logs; los contenedores continuarán ejecutándose).*
+
+#### C. Verificar el estado de los contenedores
+```bash
+docker compose ps
+```
+Deberás ver ambos contenedores en estado activo:
+* `postgres_db` (estado `healthy`, puerto `0.0.0.0:5433->5432/tcp`)
+* `pgadmin_web` (estado `running`, puerto `0.0.0.0:8081->80/tcp`)
+
+#### D. Acceder a la consola interactiva `psql` por terminal
+Si deseas interactuar directamente con la base de datos mediante la consola de PostgreSQL:
+```bash
+docker exec -it postgres_db psql -U bkseducate -d bkddb
+```
+Dentro de `psql` puedes ejecutar:
+```sql
+-- Listar todas las tablas creadas
+\dt
+
+-- Probar una consulta rápida
+SELECT id, razon_social, sector_economico FROM empresas;
+
+-- Salir de psql
+\q
+```
+
+#### E. Ejecutar scripts SQL directamente desde terminal
+```bash
+# Ejecutar una consulta puntual desde terminal:
+docker exec -it postgres_db psql -U bkseducate -d bkddb -c "SELECT * FROM vw_empresas_resumen_sistemas;"
+
+# Ejecutar la batería de consultas y reportes:
+docker exec -i postgres_db psql -U bkseducate -d bkddb < 10_consultas_reportes.sql
+```
 
 ---
 
-### 4. Trabajar en el Navegador con pgAdmin 4 (`http://localhost:8081`)
+### 4. Inicialización Visual (1 Clic - Sin Terminal)
 
-Una vez encendidos los contenedores, todo tu trabajo se realiza en el navegador web:
+Si prefieres no usar la consola de comandos, puedes levantar todo gráficamente:
 
-#### A. Iniciar Sesión
-1. Abre **Safari** o **Google Chrome** y ve a: **`http://localhost:8081`**
-2. Ingresa con las credenciales maestras:
+* **Opción A (VS Code / Cursor):**  
+  Haz clic derecho sobre [`docker-compose.yml`](docker-compose.yml) en el explorador de archivos ➔ selecciona **Compose Up**.
+* **Opción B (Docker Desktop):**  
+  Abre **Docker Desktop**, localiza el contenedor del proyecto en la sección **Containers** y haz clic en el botón **Play (▶️)**.
+
+---
+
+### 5. Administrar desde el Navegador con pgAdmin 4 (`http://localhost:8081`)
+
+1. Abre **Safari**, **Google Chrome** o tu navegador preferido e ingresa a: **`http://localhost:8081`**
+2. Inicia sesión con:
    * **Email:** `admin@example.com`
    * **Contraseña:** `SuperBks123!`
-
-#### B. Conectar a la Base de Datos
-1. En el panel izquierdo, despliega la carpeta **Servers**.
-2. Verás el servidor preconfigurado: **`Postgres Docker SST (bkddb)`**.
-   *(Si requieres registrarlo manualmente: Clic derecho en Servers ➔ Register ➔ Server... ➔ Host: `postgres_db`, Port: `5432`, Maintenance DB: `bkddb`, User: `bkseducate`, Password: `bkseducate2026`).*
-3. Haz doble clic sobre el servidor e introduce la contraseña: `bkseducate2026`.
-4. Marca la casilla **Save Password** para no tener que volver a escribirla.
-
-#### C. Verificar la Auto-Inicialización
-Despliega: `Servers` ➔ `Postgres Docker SST` ➔ `Databases` ➔ `bkddb` ➔ `Schemas` ➔ `public` ➔ `Tables`.  
-Verás **todas las tablas ya creadas y pobladas con datos**:
-* `empresas`, `personas`, `cargos`, `sedes_empresa`
-* `sistemas_gestion`, `modulos`, `etapas_phva`
-* `plantillas`, `formatos`, `documentos_empresa`, `bloqueos_recursos`
+3. En el panel lateral izquierdo despliega: `Servers` ➔ **`Postgres Docker SST (bkddb)`**.
+4. Introduce la contraseña: `bkseducate2026` y activa la casilla **Save Password**.
+5. Despliega: `Databases` ➔ `bkddb` ➔ `Schemas` ➔ `public` ➔ `Tables` para inspeccionar las tablas pobladas.
+6. Haz clic derecho sobre **`bkddb`** ➔ **Query Tool** para abrir el editor SQL y ejecutar cualquier consulta con el botón **Play (▶️)** o la tecla `F5`.
 
 ---
 
-### 5. Resolver y Probar Consultas desde el Query Tool (Visual)
+### 6. Conexión desde Clientes Nativos (TablePlus / DBeaver / Postico)
 
-Para ejecutar las consultas del examen o probar reportes:
-
-1. En el panel izquierdo de pgAdmin, haz clic derecho sobre **`bkddb`** ➔ selecciona **Query Tool**.
-2. En la barra superior del editor SQL:
-   * Puedes abrir el archivo [`10_consultas_reportes.sql`](10_consultas_reportes.sql) haciendo clic en el icono de **Abrir Archivo (Carpeta)**.
-   * O puedes copiar cualquier consulta de [`consultas.md`](consultas.md) y pegarla en el editor.
-3. Selecciona la consulta que deseas evaluar con el cursor y presiona el botón **Execute (▶️)** o la tecla **`F5`** (en teclados Mac: **`Fn + F5`**).
-4. Los resultados aparecerán inmediatamente en la pestaña inferior **Data Output**.
-
----
-
-### 6. ¿Prefieres usar una App Nativa de Mac? (TablePlus / DBeaver)
-Si prefieres un cliente nativo en macOS como **TablePlus** o **DBeaver**:
+Si prefieres usar un cliente de escritorio instalado en tu máquina:
 * **Host:** `localhost` o `127.0.0.1`
-* **Port:** `5433` *(el puerto externo de tu Mac configurado en `.env`)*
-* **Database:** `bkddb`
-* **User:** `bkseducate`
-* **Password:** `bkseducate2026`
+* **Puerto:** `5433` *(el puerto externo definido en `.env`)*
+* **Base de Datos:** `bkddb`
+* **Usuario:** `bkseducate`
+* **Contraseña:** `bkseducate2026`
 
 ---
 
-### 7. Detener o Reiniciar desde Docker Desktop
-Cuando termines tu jornada de trabajo:
-* En la aplicación **Docker Desktop**, busca el grupo de contenedores del proyecto y presiona el botón **Stop (⏹️)**.
-* Cuando vuelvas a trabajar, solo presiona **Start (▶️)**; tus datos permanecerán intactos gracias a los volúmenes persistentes.
+### 7. Comandos de Gestión y Ciclo de Vida en Terminal
+
+| Comando | Descripción |
+| :--- | :--- |
+| `docker compose stop` | Pausa los contenedores temporalmente sin eliminar datos. |
+| `docker compose start` | Reanuda los contenedores previamente pausados. |
+| `docker compose restart` | Reinicia ambos servicios (útil tras cambios en configuración). |
+| `docker compose logs -f` | Muestra el flujo continuo de registros de ambos servicios. |
+| `docker compose down` | Detiene y destruye los contenedores (preservando el volumen de datos). |
+| `docker compose down -v` | **Reseteo total:** Destruye contenedores y volúmenes, permitiendo que la carpeta `init/` vuelva a ejecutarse limpia desde cero al siguiente `up`. |
 
 ---
 
