@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Postgres Docker SST (bkddb)",
+      "Group": "Servers",
+      "Host": "postgres_db",
+      "Port": 5432,
+      "MaintenanceDB": "bkddb",
+      "Username": "bkseducate",
+      "SSLMode": "prefer"
+    }
+  }
+}
